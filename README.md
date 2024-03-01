@@ -154,6 +154,7 @@ otus_hw_22=#
 
 
 
+DELETE FROM good_sum_mart * ;
 INSERT INTO good_sum_mart (good_name, sum_sale)
 SELECT G.good_name, sum(G.good_price * S.sales_qty)
 FROM goods G
