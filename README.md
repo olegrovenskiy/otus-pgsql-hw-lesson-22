@@ -143,51 +143,52 @@ INSERT INTO sales (good_id, sales_qty) VALUES (1, 10), (1, 1), (1, 120), (2, 1);
 1. Создаём триггер функцию
 
 
-        DELETE FROM good_sum_mart * ;
-        INSERT INTO good_sum_mart (good_name, sum_sale)
-        SELECT G.good_name, sum(G.good_price * S.sales_qty)
-        FROM goods G
-        INNER JOIN sales S ON S.good_id = G.goods_id
-        GROUP BY G.good_name;
-
-        otus_hw_22=#
-        otus_hw_22=# INSERT INTO good_sum_mart (good_name, sum_sale)
-        otus_hw_22-# SELECT G.good_name, sum(G.good_price * S.sales_qty)
-        otus_hw_22-# FROM goods G
-        otus_hw_22-# INNER JOIN sales S ON S.good_id = G.goods_id
-        otus_hw_22-# GROUP BY G.good_name;
-        INSERT 0 2
-        otus_hw_22=# select * from good_sum_mart;
-                good_name         |   sum_sale
-        --------------------------+--------------
-         Автомобиль Ferrari FXX K | 185000000.01
-         Спички хозайственные     |        65.50
-        (2 rows)
+                DELETE FROM good_sum_mart * ;
+                INSERT INTO good_sum_mart (good_name, sum_sale)
+                SELECT G.good_name, sum(G.good_price * S.sales_qty)
+                FROM goods G
+                INNER JOIN sales S ON S.good_id = G.goods_id
+                GROUP BY G.good_name;
         
-        otus_hw_22=#
+                otus_hw_22=#
+                otus_hw_22=# INSERT INTO good_sum_mart (good_name, sum_sale)
+                otus_hw_22-# SELECT G.good_name, sum(G.good_price * S.sales_qty)
+                otus_hw_22-# FROM goods G
+                otus_hw_22-# INNER JOIN sales S ON S.good_id = G.goods_id
+                otus_hw_22-# GROUP BY G.good_name;
+                INSERT 0 2
+                otus_hw_22=# select * from good_sum_mart;
+                        good_name         |   sum_sale
+                --------------------------+--------------
+                 Автомобиль Ferrari FXX K | 185000000.01
+                 Спички хозайственные     |        65.50
+                (2 rows)
+                
+                otus_hw_22=#
+        
+                otus_hw_22=# CREATE OR REPLACE FUNCTION hw_22()
+                otus_hw_22-# RETURNS trigger
+                otus_hw_22-# AS
+                otus_hw_22-# $TRIG_FUNC$
+                otus_hw_22$# BEGIN
+                otus_hw_22$#
+                otus_hw_22$# DELETE FROM good_sum_mart * ;
+                otus_hw_22$# INSERT INTO good_sum_mart (good_name, sum_sale)
+                otus_hw_22$# SELECT G.good_name, sum(G.good_price * S.sales_qty)
+                otus_hw_22$# FROM goods G
+                otus_hw_22$# INNER JOIN sales S ON S.good_id = G.goods_id
+                otus_hw_22$# GROUP BY G.good_name;
+                otus_hw_22$# RETURN NULL;
+                otus_hw_22$# END;
+                otus_hw_22$# $TRIG_FUNC$
+                otus_hw_22-#   LANGUAGE plpgsql
+                otus_hw_22-#
+                otus_hw_22-# ;
+                CREATE FUNCTION
 
-        otus_hw_22=#
-        otus_hw_22=# CREATE OR REPLACE FUNCTION hw_22()
-        otus_hw_22-# RETURNS trigger
-        otus_hw_22-# AS
-        otus_hw_22-# $TRIG_FUNC$
-        otus_hw_22$# BEGIN
-        otus_hw_22$#
-        otus_hw_22$# DELETE FROM good_sum_mart * ;
-        otus_hw_22$# INSERT INTO good_sum_mart (good_name, sum_sale)
-        otus_hw_22$# SELECT G.good_name, sum(G.good_price * S.sales_qty)
-        otus_hw_22$# FROM goods G
-        otus_hw_22$# INNER JOIN sales S ON S.good_id = G.goods_id
-        otus_hw_22$# GROUP BY G.good_name;
-        otus_hw_22$#
-        otus_hw_22$# END;
-        otus_hw_22$# $TRIG_FUNC$
-        otus_hw_22-#   LANGUAGE plpgsql
-        otus_hw_22-# ;
-        CREATE FUNCTION
-        otus_hw_22=#
-        otus_hw_22=#
-        otus_hw_22=# \df+
+                otus_hw_22=#
+                otus_hw_22=#
+                otus_hw_22=# \df+
                                                                                                             List of functions
              Schema      | Name  | Result data type | Argument data types | Type | Volatility | Parallel |  Owner   | Security | Access privileges | Language |                     Source code                     | Description
         -----------------+-------+------------------+---------------------+------+------------+----------+----------+----------+-------------------+----------+-----------------------------------------------------+-------------
@@ -200,23 +201,109 @@ INSERT INTO sales (good_id, sales_qty) VALUES (1, 10), (1, 1), (1, 120), (2, 1);
                          |       |                  |                     |      |            |          |          |          |                   |          | FROM goods G                                       +|
                          |       |                  |                     |      |            |          |          |          |                   |          | INNER JOIN sales S ON S.good_id = G.goods_id       +|
                          |       |                  |                     |      |            |          |          |          |                   |          | GROUP BY G.good_name;                              +|
-                         |       |                  |                     |      |            |          |          |          |                   |          |                                                    +|
+                         |       |                  |                     |      |            |          |          |          |                   |          | RETURN NULL;                                       +|
                          |       |                  |                     |      |            |          |          |          |                   |          | END;                                               +|
                          |       |                  |                     |      |            |          |          |          |                   |          |                                                     |
         (1 row)
         
-        otus_hw_22=# ^C
         otus_hw_22=#
 
 
 
-CREATE TRIGGER tr_hw_22
-AFTER INSERT OR UPDATE OR DELETE
-ON sales
-FOR EACH STATEMENT
-EXECUTE FUNCTION hw_22();
+Создаём триггер
+
+        CREATE TRIGGER tr_hw_22
+        AFTER INSERT OR UPDATE OR DELETE
+        ON sales
+        FOR EACH STATEMENT
+        EXECUTE FUNCTION hw_22();
 
 
+        otus_hw_22=#
+        otus_hw_22=# CREATE TRIGGER tr_hw_22
+        otus_hw_22-# AFTER INSERT OR UPDATE OR DELETE
+        otus_hw_22-# ON sales
+        otus_hw_22-# FOR EACH STATEMENT
+        otus_hw_22-# EXECUTE FUNCTION hw_22();
+        CREATE TRIGGER
+        otus_hw_22=#
+
+
+--------------
+#### 7. Проверка работы триггера
+
+        otus_hw_22=#
+        otus_hw_22=# select * from good_sum_mart;
+                good_name         |   sum_sale
+        --------------------------+--------------
+         Автомобиль Ferrari FXX K | 185000000.01
+         Спички хозайственные     |        75.50
+        (2 rows)
+        
+        otus_hw_22=# select * from sales;
+         sales_id | good_id |          sales_time           | sales_qty
+        ----------+---------+-------------------------------+-----------
+                1 |       1 | 2024-03-01 07:05:16.650125-05 |        10
+                2 |       1 | 2024-03-01 07:05:16.650125-05 |         1
+                3 |       1 | 2024-03-01 07:05:16.650125-05 |       120
+                4 |       2 | 2024-03-01 07:05:16.650125-05 |         1
+                5 |       1 | 2024-03-01 07:44:06.199849-05 |        20
+        (5 rows)
+        
+        otus_hw_22=#
+        
+        
+        otus_hw_22=# INSERT INTO sales (good_id, sales_qty) VALUES (1, 25);
+        INSERT 0 1
+        otus_hw_22=#
+        
+        otus_hw_22=# select * from sales;
+         sales_id | good_id |          sales_time           | sales_qty
+        ----------+---------+-------------------------------+-----------
+                1 |       1 | 2024-03-01 07:05:16.650125-05 |        10
+                2 |       1 | 2024-03-01 07:05:16.650125-05 |         1
+                3 |       1 | 2024-03-01 07:05:16.650125-05 |       120
+                4 |       2 | 2024-03-01 07:05:16.650125-05 |         1
+                5 |       1 | 2024-03-01 07:44:06.199849-05 |        20
+                7 |       1 | 2024-03-01 08:52:19.537748-05 |        25
+        (6 rows)
+        
+        otus_hw_22=# select * from good_sum_mart;
+                good_name         |   sum_sale
+        --------------------------+--------------
+         Автомобиль Ferrari FXX K | 185000000.01
+         Спички хозайственные     |        88.00
+        (2 rows)
+        
+        otus_hw_22=#
+        
+        
+        otus_hw_22=#
+        otus_hw_22=# select * from good_sum_mart;
+                good_name         |   sum_sale
+        --------------------------+--------------
+         Автомобиль Ferrari FXX K | 185000000.01
+         Спички хозайственные     |        88.00
+        (2 rows)
+        
+        otus_hw_22=# INSERT INTO sales (good_id, sales_qty) VALUES (1, 30);
+        INSERT 0 1
+        otus_hw_22=# select * from good_sum_mart;
+                good_name         |   sum_sale
+        --------------------------+--------------
+         Автомобиль Ferrari FXX K | 185000000.01
+         Спички хозайственные     |       103.00
+        (2 rows)
+        
+        otus_hw_22=#
+
+
+Видно что при изменении данных в таблицы sales происходит актуализация таблицы good_sum_mart
+
+#### 8. Чем такая схема (витрина+триггер) предпочтительнее отчета, создаваемого "по требованию" (кроме производительности)?
+
+1. не требуется отслеживать изменения в продажах
+2. можно создать дополнительные условия или действия
 
 
 
