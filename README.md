@@ -305,5 +305,111 @@ INSERT INTO sales (good_id, sales_qty) VALUES (1, 10), (1, 1), (1, 120), (2, 1);
 1. не требуется отслеживать изменения в продажах
 2. можно создать дополнительные условия или действия
 
+В задании было - Подсказка: В реальной жизни возможны изменения цен.
+
+Это действительно можно обеспечить с помощью тригера и тригер функции, но тогда схема работы будет следующая:
+
+1. При каждой продаже добавляется дополнителдьная запись в таблицу good_sum_mart;
+2. При изменении добавляется дельта, так как у нис в таблице good_sum_mart нет индексов, то будем вставлять изменения
+3. При удалении тоже вставляем изменение, а именно старое значение со знаком минус. Для этого изменим триггер с AFTER на BEFORE
+
+Для тестов создал новую таблицу good_sum_mart_1;
+
+Новый триггер и функция:
+
+        DROP TRIGGER IF EXISTS t_new_01 ON sales;
+        CREATE TRIGGER t_new_01
+        BEFORE INSERT OR UPDATE OR DELETE
+        ON sales
+        FOR EACH ROW EXECUTE FUNCTION hw_22_new();
+        
+        
+        CREATE OR REPLACE FUNCTION hw_22_new() 
+        RETURNS trigger 
+        AS
+        $TRIG_FUNC$
+        BEGIN
+            IF      TG_OP = 'INSERT'
+            THEN
+                INSERT INTO good_sum_mart_1 (good_name, sum_sale)
+                SELECT G.good_name, G.good_price * NEW.sales_qty
+                FROM goods G
+                INNER JOIN sales S ON S.good_id = G.goods_id
+                WHERE S.sales_id=NEW.sales_id;
+                    RETURN NEW;
+        
+        
+            ELSIF   TG_OP = 'UPDATE'
+            THEN
+                INSERT INTO good_sum_mart_1 (good_name, sum_sale)
+                SELECT G.good_name, G.good_price * (NEW.sales_qty-OLD.sales_qty)
+                FROM goods G
+                INNER JOIN sales S ON S.good_id = G.goods_id
+                WHERE S.sales_id=NEW.sales_id;
+        	      RETURN NEW;
+        
+        
+            ELSIF   TG_OP = 'DELETE'
+            THEN
+                INSERT INTO good_sum_mart_1 (good_name, sum_sale)
+                SELECT G.good_name, G.good_price * (0-OLD.sales_qty)
+                FROM goods G
+                INNER JOIN sales S ON S.good_id = G.goods_id
+                WHERE S.sales_id=OLD.sales_id;
+        	      RETURN OLD;
+        
+                END IF;
+        END;
+        $TRIG_FUNC$
+         LANGUAGE plpgsql;
+
+
+Протестировал отработку Insert, Update, Delete - соответствует ожиданиям
+
+
+        otus_hw_22=# INSERT INTO sales (good_id, sales_qty) VALUES (1, 10);
+        INSERT 0 1
+        otus_hw_22=#
+        
+        otus_hw_22=# select * from good_sum_mart_1;
+              good_name       | sum_sale
+        ----------------------+----------
+         Спички хозайственные |     4.00
+         Спички хозайственные |     4.00
+         Спички хозайственные |     5.00
+        (3 rows)
+        
+        
+        otus_hw_22=#  update sales set sales_qty = 5 where sales_id = 26;
+        UPDATE 1
+        otus_hw_22=# select * from good_sum_mart_1;
+              good_name       | sum_sale
+        ----------------------+----------
+         Спички хозайственные |     4.00
+         Спички хозайственные |     4.00
+         Спички хозайственные |     5.00
+         Спички хозайственные |    -2.50
+        (4 rows)
+        
+        
+        otus_hw_22=#
+        otus_hw_22=#
+        otus_hw_22=# delete from sales where sales_id = 23;
+        DELETE 1
+        otus_hw_22=# select * from good_sum_mart_1;
+              good_name       | sum_sale
+        ----------------------+----------
+         Спички хозайственные |     4.00
+         Спички хозайственные |     4.00
+         Спички хозайственные |     5.00
+         Спички хозайственные |    -2.50
+         Спички хозайственные |    -2.00
+        (5 rows)
+        
+        otus_hw_22=#
+        
+
+
+
 
 
