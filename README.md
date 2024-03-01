@@ -210,7 +210,11 @@ INSERT INTO sales (good_id, sales_qty) VALUES (1, 10), (1, 1), (1, 120), (2, 1);
 
 
 
-
+CREATE TRIGGER tr_hw_22
+AFTER INSERT OR UPDATE OR DELETE
+ON sales
+FOR EACH STATEMENT
+EXECUTE FUNCTION hw_22();
 
 
 
