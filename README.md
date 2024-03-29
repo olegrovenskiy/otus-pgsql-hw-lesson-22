@@ -411,6 +411,110 @@ INSERT INTO sales (good_id, sales_qty) VALUES (1, 10), (1, 1), (1, 120), (2, 1);
         
 
 
+###    Правки после замечаний
+
+1. Создал таблицу витрины, в которой ключ это имя товара и он должен быть уникальный
+
+        CREATE TABLE good_sum_mart_correction 
+        (
+        good_name  varchar(63) PRIMARY KEY,
+        sum_sale   numeric(16, 2) NOT NULL,
+        CONSTRAINT good_name_unique UNIQUE (good_name)
+        );
+
+2.   Скорректировал триггер и функцию
+
+
+        DROP TRIGGER IF EXISTS t_correction ON sales;
+        CREATE TRIGGER t_correction
+        AFTER INSERT OR UPDATE OR DELETE
+        ON sales
+        FOR EACH ROW EXECUTE FUNCTION hw_22_correction();
+
+
+
+
+
+        CREATE OR REPLACE FUNCTION hw_22_correction()
+        RETURNS trigger
+        AS
+        $TRIG_FUNC$
+        BEGIN
+        
+        	    UPDATE good_sum_mart_correction
+                    SET sum_sale = sum_sale + G.good_price * NEW.sales_qty
+                    FROM goods G
+                    INNER JOIN sales S ON S.good_id = G.goods_id
+                    WHERE good_sum_mart_correction.good_name = G.good_name AND S.sales_id=NEW.sales_id;
+        
+        	IF NOT FOUND THEN
+        
+                    INSERT INTO good_sum_mart_correction (good_name, sum_sale)
+                    SELECT G.good_name, G.good_price * NEW.sales_qty
+                    FROM goods G
+                    INNER JOIN sales S ON S.good_id = G.goods_id
+                    WHERE S.sales_id=NEW.sales_id;
+        	END IF;
+         RETURN NULL;
+         END;
+         $TRIG_FUNC$
+         LANGUAGE plpgsql;
+
+3. Проверил, что update действительно отрабатывае
+
+        otus_hw_22=#  select * from good_sum_mart_correction;
+              good_name       | sum_sale
+        ----------------------+----------
+         Спички хозайственные |   137.00
+        (1 row)
+        
+        otus_hw_22=# CREATE OR REPLACE FUNCTION hw_22_correction()
+        otus_hw_22-# RETURNS trigger
+        otus_hw_22-# AS
+        otus_hw_22-# $TRIG_FUNC$
+        otus_hw_22$# BEGIN
+        otus_hw_22$#
+        otus_hw_22$#     UPDATE good_sum_mart_correction
+        otus_hw_22$#             SET sum_sale = sum_sale + G.good_price * NEW.sales_qty
+        otus_hw_22$#             FROM goods G
+        otus_hw_22$#             INNER JOIN sales S ON S.good_id = G.goods_id
+        otus_hw_22$#             WHERE good_sum_mart_correction.good_name = G.good_name AND S.sales_id=NEW.sales_id;
+        otus_hw_22$#
+        otus_hw_22$# IF NOT FOUND THEN
+        otus_hw_22$#
+        otus_hw_22$#             INSERT INTO good_sum_mart_correction (good_name, sum_sale)
+        otus_hw_22$#             SELECT G.good_name, G.good_price * NEW.sales_qty
+        otus_hw_22$#             FROM goods G
+        otus_hw_22$#             INNER JOIN sales S ON S.good_id = G.goods_id
+        otus_hw_22$#             WHERE S.sales_id=NEW.sales_id;
+        otus_hw_22$# END IF;
+        otus_hw_22$#  RETURN NULL;
+        otus_hw_22$#  END;
+        otus_hw_22$#  $TRIG_FUNC$
+        otus_hw_22-#  LANGUAGE plpgsql;
+        CREATE FUNCTION
+        otus_hw_22=# INSERT INTO sales (good_id, sales_qty) VALUES (1, 20);
+        INSERT 0 1
+        otus_hw_22=#  select * from good_sum_mart_correction;
+              good_name       | sum_sale
+        ----------------------+----------
+         Спички хозайственные |   147.00
+        (1 row)
+        
+        otus_hw_22=#
+
+
+        otus_hw_22=# ^C
+        otus_hw_22=# INSERT INTO sales (good_id, sales_qty) VALUES (1, 200);
+        INSERT 0 1
+        otus_hw_22=#  select * from good_sum_mart_correction;
+              good_name       | sum_sale
+        ----------------------+----------
+         Спички хозайственные |   247.00
+        (1 row)
+        
+        otus_hw_22=#
+
 
 
 
